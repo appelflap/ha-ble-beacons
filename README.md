@@ -13,6 +13,13 @@ integrations later.
 Devices are only offered for setup at -50 dBm or stronger (`MIN_DISCOVERY_RSSI`), so the
 beacons of the neighbours are not. Hold a beacon close to an adapter or proxy to add it.
 
+## Brand icons
+
+- `eddystone`: the Eddystone mark from [google/eddystone](https://github.com/google/eddystone/tree/master/branding)
+  (`EddyStone_final-02.svg`), drawn black for light and white for dark themes.
+- `minew`: the mark from Minew's logo (GitHub avatar of [MinewTech](https://github.com/MinewTech)), traced to
+  a vector shape so it stays sharp at 256 and 512 px.
+
 ## Layout
 
 Each integration vendors its parser in a sub-package (`eddystone_ble`, `minew_ble`) that only
