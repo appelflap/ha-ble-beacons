@@ -9,6 +9,7 @@ integrations later.
 |---|---|---|
 | `eddystone` | Eddystone-TLM, unencrypted (service UUID `0xFEAA`, frame `0x20`), [spec](https://github.com/google/eddystone/blob/master/eddystone-tlm/tlm-plain.md) | temperature (chip temperature), battery voltage, signal strength |
 | `ela` | ELA Innovation Blue PUCK/COIN tags (service data, or manufacturer data `0x0757`): T, RHT, MAG, MOV, DI, per ELA's "BLE Frame specifications" 11B | temperature, humidity, magnet/moving/input (on/off) with event counters, battery %, battery voltage, signal strength |
+| `teltonika` | Teltonika EYE SENSOR/EYE BEACON (manufacturer data `0x089A`, protocol version `0x01`), per the Teltonika wiki | temperature, humidity, magnet and moving (on/off), movement events, pitch, roll, battery voltage, low battery, signal strength |
 | `minew` | Minew temperature frame (service UUID `0xFFE1`, frame `0xA1`, version `0x13`, or `0x99` on some E9 firmware), layout per [advlib-ble-services](https://github.com/reelyactive/advlib-ble-services/blob/master/lib/minew.js) | temperature, battery %, signal strength |
 
 Devices are only offered for setup at -50 dBm or stronger (`MIN_DISCOVERY_RSSI`), so the
@@ -20,12 +21,14 @@ beacons of the neighbours are not. Hold a beacon close to an adapter or proxy to
   (`EddyStone_final-02.svg`), drawn black for light and white for dark themes.
 - `ela`: the node mark from ELA Innovation's logo (GitHub avatar of [elaInnovation](https://github.com/elaInnovation)),
   traced to a vector shape.
+- `teltonika`: the mark from Teltonika's logo (GitHub avatar of [teltonika-telematics](https://github.com/teltonika-telematics)),
+  traced to a vector shape.
 - `minew`: the mark from Minew's logo (GitHub avatar of [MinewTech](https://github.com/MinewTech)), traced to
   a vector shape so it stays sharp at 256 and 512 px.
 
 ## Layout
 
-Each integration vendors its parser in a sub-package (`ela_ble`, `eddystone_ble`, `minew_ble`) that only
+Each integration vendors its parser in a sub-package (`ela_ble`, `eddystone_ble`, `minew_ble`, `teltonika_ble`) that only
 depends on `bluetooth-sensor-state-data`, `sensor-state-data` and `bluetooth-data-tools`
 (all shipped with Home Assistant). These are meant to become PyPI libraries.
 

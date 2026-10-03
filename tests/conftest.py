@@ -4,5 +4,5 @@ import sys
 from pathlib import Path
 
 COMPONENTS = Path(__file__).parent.parent / "custom_components"
-for integration in ("ela", "eddystone", "minew"):
+for integration in ("ela", "eddystone", "minew", "teltonika"):
     sys.path.insert(0, str(COMPONENTS / integration))

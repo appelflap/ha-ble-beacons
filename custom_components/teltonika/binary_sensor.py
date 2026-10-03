@@ -1,0 +1,101 @@
+"""Support for Teltonika binary sensors."""
+
+from typing import override
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
+from homeassistant.components.bluetooth.passive_update_processor import (
+    PassiveBluetoothDataProcessor,
+    PassiveBluetoothDataUpdate,
+    PassiveBluetoothProcessorEntity,
+)
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
+
+from . import TeltonikaConfigEntry
+from .device import device_key_to_bluetooth_entity_key
+from .teltonika_ble import BinarySensorDeviceClass as TeltonikaBinarySensorDeviceClass, SensorUpdate
+
+BINARY_SENSOR_DESCRIPTIONS = {
+    # On while a magnetic field is detected.
+    TeltonikaBinarySensorDeviceClass.PRESENCE: BinarySensorEntityDescription(
+        key=TeltonikaBinarySensorDeviceClass.PRESENCE,
+        device_class=BinarySensorDeviceClass.PRESENCE,
+    ),
+    # On while the sensor moves.
+    TeltonikaBinarySensorDeviceClass.MOVING: BinarySensorEntityDescription(
+        key=TeltonikaBinarySensorDeviceClass.MOVING,
+        device_class=BinarySensorDeviceClass.MOVING,
+    ),
+    # On when the battery is below 15 %.
+    TeltonikaBinarySensorDeviceClass.BATTERY: BinarySensorEntityDescription(
+        key=TeltonikaBinarySensorDeviceClass.BATTERY,
+        device_class=BinarySensorDeviceClass.BATTERY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+}
+
+
+def sensor_update_to_bluetooth_data_update(
+    sensor_update: SensorUpdate,
+) -> PassiveBluetoothDataUpdate[bool | None]:
+    """Convert a binary sensor update to a bluetooth data update."""
+    return PassiveBluetoothDataUpdate(
+        devices={
+            device_id: sensor_device_info_to_hass_device_info(device_info)
+            for device_id, device_info in sensor_update.devices.items()
+        },
+        entity_descriptions={
+            device_key_to_bluetooth_entity_key(device_key): BINARY_SENSOR_DESCRIPTIONS[
+                description.device_class
+            ]
+            for device_key, description in sensor_update.binary_entity_descriptions.items()
+            if description.device_class
+        },
+        entity_data={
+            device_key_to_bluetooth_entity_key(device_key): sensor_values.native_value
+            for device_key, sensor_values in sensor_update.binary_entity_values.items()
+        },
+        entity_names={
+            device_key_to_bluetooth_entity_key(device_key): sensor_values.name
+            for device_key, sensor_values in sensor_update.binary_entity_values.items()
+        },
+    )
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TeltonikaConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    """Set up the Teltonika BLE binary sensors."""
+    coordinator = entry.runtime_data
+    processor = PassiveBluetoothDataProcessor(sensor_update_to_bluetooth_data_update)
+    entry.async_on_unload(
+        processor.async_add_entities_listener(
+            TeltonikaBluetoothBinarySensorEntity, async_add_entities
+        )
+    )
+    entry.async_on_unload(
+        coordinator.async_register_processor(processor, BinarySensorEntityDescription)
+    )
+
+
+class TeltonikaBluetoothBinarySensorEntity(
+    PassiveBluetoothProcessorEntity[
+        PassiveBluetoothDataProcessor[bool | None, SensorUpdate]
+    ],
+    BinarySensorEntity,
+):
+    """Representation of a Teltonika binary sensor."""
+
+    @property
+    @override
+    def is_on(self) -> bool | None:
+        """Return the native value."""
+        return self.processor.entity_data.get(self.entity_key)
